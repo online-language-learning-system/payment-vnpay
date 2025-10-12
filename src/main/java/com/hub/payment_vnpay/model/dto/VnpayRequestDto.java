@@ -4,7 +4,9 @@ import java.math.BigDecimal;
 
 public record VnpayRequestDto(
         Long orderId,
+        String userId,          // thêm userId
         BigDecimal amount,
         String orderInfo,
-        String returnUrl
+        String returnUrl,
+        Integer paymentMethodId // thêm paymentMethodId
 ) {}
