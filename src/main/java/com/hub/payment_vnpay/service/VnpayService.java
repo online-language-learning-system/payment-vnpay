@@ -1,15 +1,18 @@
 package com.hub.payment_vnpay.service;
 
 import com.hub.payment_vnpay.config.VnpayConfig;
+import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
+import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.model.Payment;
 import com.hub.payment_vnpay.model.PaymentMethod;
-import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
 import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
 import com.hub.payment_vnpay.model.dto.VnpayResponseDto;
+import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
 import com.hub.payment_vnpay.repository.PaymentMethodRepository;
 import com.hub.payment_vnpay.repository.PaymentRepository;
 import com.hub.payment_vnpay.utils.VnpayUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,7 +21,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +29,7 @@ public class VnpayService {
     private final VnpayConfig config;
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
     public VnpayResponseDto createPaymentUrl(VnpayRequestDto requestDto) {
@@ -39,6 +42,8 @@ public class VnpayService {
                         pm.setActive(true);
                         return paymentMethodRepository.save(pm);
                     });
+
+
             Map<String, String> params = new LinkedHashMap<>();
             params.put("vnp_Version", config.getVersion());
             params.put("vnp_Command", config.getCommand());
@@ -55,10 +60,12 @@ public class VnpayService {
             params.put("vnp_ReturnUrl", requestDto.returnUrl());
             params.put("vnp_TxnRef", requestDto.orderId().toString());
 
+
             String dataToHash = VnpayUtils.getDataToHash(params);
             String secureHash = VnpayUtils.hmacSHA512(config.getHashSecret(), dataToHash);
             String query = VnpayUtils.buildQuery(params);
             String paymentUrl = config.getApiUrl() + "?" + query + "&vnp_SecureHash=" + secureHash;
+
 
             Payment payment = new Payment();
             payment.setOrderId(requestDto.orderId());
@@ -73,6 +80,7 @@ public class VnpayService {
             paymentRepository.save(payment);
 
             System.out.println("[VNPay] Payment URL created for orderId=" + requestDto.orderId());
+
 
             return new VnpayResponseDto(
                     paymentUrl,
@@ -98,27 +106,97 @@ public class VnpayService {
             long orderId = Long.parseLong(params.get("vnp_TxnRef"));
             String responseCode = params.get("vnp_ResponseCode");
             String transactionNo = params.get("vnp_TransactionNo");
-            BigDecimal amount = new BigDecimal(params.getOrDefault("vnp_Amount", "0")).divide(BigDecimal.valueOf(100));
+            BigDecimal callbackAmount = new BigDecimal(params.getOrDefault("vnp_Amount", "0"))
+                    .divide(BigDecimal.valueOf(100));
 
             Payment payment = paymentRepository.findByOrderId(orderId)
                     .orElseThrow(() -> new RuntimeException("Payment not found for orderId=" + orderId));
 
             payment.setTransactionCode(transactionNo);
-            payment.setAmount(amount);
             payment.setUpdatedAt(LocalDateTime.now());
+
+            if (!callbackAmount.equals(payment.getAmount())) {
+                payment.setPaymentStatus(PaymentStatus.FAILED.name());
+                paymentRepository.save(payment);
+
+                System.err.println("[VNPay] Amount mismatch for orderId=" + orderId +
+                        " | Expected=" + payment.getAmount() + ", Received=" + callbackAmount);
+
+                PaymentFailedEvent event = new PaymentFailedEvent(
+                        orderId,
+                        payment.getUserId(),
+                        callbackAmount,
+                        PaymentStatus.FAILED,
+                        "VNPay",
+                        transactionNo,
+                        "Amount mismatch: expected " + payment.getAmount() + ", received " + callbackAmount
+                );
+
+                kafkaTemplate.send("payment.events", event)
+                        .whenComplete((result, ex) -> {
+                            if (ex == null) {
+                                System.out.println("[Kafka] PaymentFailedEvent sent successfully (amount mismatch): " + event);
+                            } else {
+                                System.err.println("[Kafka] Failed to send PaymentFailedEvent (amount mismatch): " + ex.getMessage());
+                            }
+                        });
+                return;
+            }
+
 
             if ("00".equals(responseCode)) {
                 payment.setPaymentStatus(PaymentStatus.SUCCESS.name());
-                System.out.println("[VNPay] Payment SUCCESS for orderId=" + orderId);
-            } else {
-                payment.setPaymentStatus(PaymentStatus.FAILED.name());
-                System.out.println("[VNPay] Payment FAILED for orderId=" + orderId + " | Code=" + responseCode);
-            }
+                paymentRepository.save(payment);
 
-            paymentRepository.save(payment);
+                System.out.println("[VNPay] Payment SUCCESS for orderId=" + orderId);
+
+                PaymentSucceededEvent event = new PaymentSucceededEvent(
+                        orderId,
+                        callbackAmount,
+                        "VNPay",
+                        PaymentStatus.SUCCESS,
+                        transactionNo,
+                        payment.getUserId()
+                );
+
+                kafkaTemplate.send("payment.events", event)
+                        .whenComplete((result, ex) -> {
+                            if (ex == null) {
+                                System.out.println("[Kafka] PaymentSucceededEvent sent successfully: " + event);
+                            } else {
+                                System.err.println("[Kafka] Failed to send PaymentSucceededEvent: " + ex.getMessage());
+                            }
+                        });
+            }
+            else {
+                payment.setPaymentStatus(PaymentStatus.FAILED.name());
+                paymentRepository.save(payment);
+
+                System.out.println("[VNPay] Payment FAILED for orderId=" + orderId + " | Code=" + responseCode);
+
+                PaymentFailedEvent event = new PaymentFailedEvent(
+                        orderId,
+                        payment.getUserId(),
+                        callbackAmount,
+                        PaymentStatus.FAILED,
+                        "VNPay",
+                        transactionNo,
+                        "VNPay response code: " + responseCode
+                );
+
+                kafkaTemplate.send("payment.events", event)
+                        .whenComplete((result, ex) -> {
+                            if (ex == null) {
+                                System.out.println("[Kafka] PaymentFailedEvent sent successfully: " + event);
+                            } else {
+                                System.err.println("[Kafka] Failed to send PaymentFailedEvent: " + ex.getMessage());
+                            }
+                        });
+            }
 
         } catch (Exception e) {
             System.err.println("[VNPay] Callback processing error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

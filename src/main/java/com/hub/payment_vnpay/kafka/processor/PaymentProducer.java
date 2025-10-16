@@ -1,6 +1,7 @@
 package com.hub.payment_vnpay.kafka.processor;
 
 import com.hub.payment_vnpay.kafka.event.OrderPlacedEvent;
+import com.hub.payment_vnpay.kafka.event.PaymentInitiatedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
@@ -43,18 +44,22 @@ public class PaymentProducer {
                 var paymentResponse = vnpayService.createPaymentUrl(request);
 
                 if (paymentResponse != null && paymentResponse.paymentUrl() != null) {
-                    PaymentSucceededEvent succeededEvent = new PaymentSucceededEvent(
+
+                    var initiatedEvent = new PaymentInitiatedEvent(
                             orderId,
                             amount,
                             order.getPaymentMethod(),
-                            PaymentStatus.SUCCESS,
+                            PaymentStatus.PENDING,
                             paymentResponse.transactionId(),
-                            studentId
+                            studentId,
+                            paymentResponse.paymentUrl()
                     );
-                    System.out.println("[Kafka] Send PaymentSucceededEvent: " + succeededEvent);
-                    return succeededEvent;
+
+                    System.out.println("[Kafka] Send PaymentInitiatedEvent: " + initiatedEvent);
+                    return initiatedEvent;
+
                 } else {
-                    PaymentFailedEvent failedEvent = new PaymentFailedEvent(
+                    var failedEvent = new PaymentFailedEvent(
                             orderId,
                             studentId,
                             amount,
@@ -68,7 +73,7 @@ public class PaymentProducer {
                 }
 
             } catch (Exception e) {
-                PaymentFailedEvent failedEvent = new PaymentFailedEvent(
+                var failedEvent = new PaymentFailedEvent(
                         orderId,
                         studentId,
                         amount,
