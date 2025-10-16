@@ -2,7 +2,7 @@ package com.hub.payment_vnpay.model.dto;
 
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
 
-public record VnpayResponseDto(
+public record VnPayResponseDto(
         String paymentUrl,
         PaymentStatus status,
         String message,

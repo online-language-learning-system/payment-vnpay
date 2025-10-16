@@ -1,8 +1,11 @@
 package com.hub.payment_vnpay.model.dto;
 
+import lombok.*;
+
 import java.math.BigDecimal;
 
-public record VnpayRequestDto(
+@Builder
+public record VnPayRequestDto(
         Long orderId,
         String userId,          // thêm userId
         BigDecimal amount,

@@ -1,5 +1,6 @@
 package com.hub.payment_vnpay.service;
 
+<<<<<<< HEAD:src/main/java/com/hub/payment_vnpay/service/VnpayService.java
 import com.hub.payment_vnpay.config.VnpayConfig;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
@@ -13,6 +14,15 @@ import com.hub.payment_vnpay.repository.PaymentRepository;
 import com.hub.payment_vnpay.utils.VnpayUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
+=======
+import com.hub.payment_vnpay.config.VnPayConfig;
+import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
+import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
+import com.hub.payment_vnpay.model.dto.VnPayResponseDto;
+import com.hub.payment_vnpay.utils.VnpayUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
+>>>>>>> 5eeb53c5b4de2acb6b387e704a8d79b64b8e3928:src/main/java/com/hub/payment_vnpay/service/VnPayService.java
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,8 +34,9 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class VnpayService {
+public class VnPayService {
 
+<<<<<<< HEAD:src/main/java/com/hub/payment_vnpay/service/VnpayService.java
     private final VnpayConfig config;
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
@@ -33,6 +44,16 @@ public class VnpayService {
 
     @Transactional
     public VnpayResponseDto createPaymentUrl(VnpayRequestDto requestDto) {
+=======
+    private final VnPayConfig config;
+    private final RedisTemplate<Long, String> redisTemplate;
+
+    public String callbackPaymentUrlByOrderId(Long orderId) {
+        return redisTemplate.opsForValue().get(orderId);
+    }
+
+    public VnPayResponseDto createPaymentUrl(VnPayRequestDto requestDto) {
+>>>>>>> 5eeb53c5b4de2acb6b387e704a8d79b64b8e3928:src/main/java/com/hub/payment_vnpay/service/VnPayService.java
         try {
             PaymentMethod method = paymentMethodRepository.findById(1)
                     .orElseGet(() -> {
@@ -82,7 +103,7 @@ public class VnpayService {
             System.out.println("[VNPay] Payment URL created for orderId=" + requestDto.orderId());
 
 
-            return new VnpayResponseDto(
+            return new VnPayResponseDto(
                     paymentUrl,
                     PaymentStatus.PENDING,
                     "Payment request created successfully!",
@@ -91,7 +112,7 @@ public class VnpayService {
 
         } catch (Exception e) {
             System.err.println("[VNPay] Error creating payment: " + e.getMessage());
-            return new VnpayResponseDto(
+            return new VnPayResponseDto(
                     null,
                     PaymentStatus.FAILED,
                     "Error creating payment: " + e.getMessage(),
