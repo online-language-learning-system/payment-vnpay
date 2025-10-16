@@ -1,11 +1,12 @@
 package com.hub.payment_vnpay.service;
 
-import com.hub.payment_vnpay.config.VnpayConfig;
+import com.hub.payment_vnpay.config.VnPayConfig;
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
-import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
-import com.hub.payment_vnpay.model.dto.VnpayResponseDto;
+import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
+import com.hub.payment_vnpay.model.dto.VnPayResponseDto;
 import com.hub.payment_vnpay.utils.VnpayUtils;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -16,11 +17,16 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class VnpayService {
+public class VnPayService {
 
-    private final VnpayConfig config;
+    private final VnPayConfig config;
+    private final RedisTemplate<Long, String> redisTemplate;
 
-    public VnpayResponseDto createPaymentUrl(VnpayRequestDto requestDto) {
+    public String callbackPaymentUrlByOrderId(Long orderId) {
+        return redisTemplate.opsForValue().get(orderId);
+    }
+
+    public VnPayResponseDto createPaymentUrl(VnPayRequestDto requestDto) {
         try {
             Map<String, String> params = new LinkedHashMap<>();
             params.put("vnp_Version", config.getVersion());
@@ -45,7 +51,7 @@ public class VnpayService {
 
             System.out.println("[VNPay]  Payment URL generated successfully for orderId=" + requestDto.orderId());
 
-            return new VnpayResponseDto(
+            return new VnPayResponseDto(
                     paymentUrl,
                     PaymentStatus.PENDING,
                     "Payment request created successfully!",
@@ -54,7 +60,7 @@ public class VnpayService {
 
         } catch (Exception e) {
             System.err.println("[VNPay] Error creating payment: " + e.getMessage());
-            return new VnpayResponseDto(
+            return new VnPayResponseDto(
                     null,
                     PaymentStatus.FAILED,
                     "Error creating payment: " + e.getMessage(),
