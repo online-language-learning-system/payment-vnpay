@@ -1,9 +1,8 @@
 package com.hub.payment_vnpay.controller;
 
-import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
-import com.hub.payment_vnpay.model.dto.VnpayResponseDto;
 import com.hub.payment_vnpay.service.VnPayService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -15,18 +14,27 @@ public class VnPayController {
 
     private final VnPayService vnpayService;
 
-    @PostMapping("/create-payment")
-    public VnpayResponseDto createPayment(@RequestBody VnpayRequestDto requestDto) {
-        return vnpayService.createPaymentUrl(requestDto);
+    @GetMapping("/get-payment-url")
+    public ResponseEntity<String> getPaymentUrl() {
+        return ResponseEntity.ok("");
     }
 
-    // Callback client
-    @GetMapping("/callback")
-    public void callback(@RequestParam Map<String, String> params) {
-         vnpayService.handlePayment(params);
-    }
+//    @PostMapping("/create-payment")
+//    public VnPayResponseDto createPayment(@RequestBody VnPayRequestDto requestDto) {
+//        return vnpayService.createPaymentUrl(requestDto);
+//    }
 
-    // IPN server
+//    Callback client
+//    @GetMapping("/callback")
+//    public void callback(@RequestParam Map<String, String> params) {
+//         vnpayService.handlePayment(params);
+//    }
+
+    /**
+     * IPN Server
+     *
+     * @param params
+     */
     @PostMapping("/ipn")
     public void ipn(@RequestParam Map<String, String> params) {
          vnpayService.handlePayment(params);

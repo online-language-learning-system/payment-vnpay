@@ -5,8 +5,8 @@ import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.model.Payment;
 import com.hub.payment_vnpay.model.PaymentMethod;
-import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
-import com.hub.payment_vnpay.model.dto.VnpayResponseDto;
+import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
+import com.hub.payment_vnpay.model.dto.VnPayResponseDto;
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
 import com.hub.payment_vnpay.repository.PaymentMethodRepository;
 import com.hub.payment_vnpay.repository.PaymentRepository;
@@ -32,7 +32,7 @@ public class VnPayService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Transactional
-    public VnpayResponseDto createPaymentUrl(VnpayRequestDto requestDto) {
+    public VnPayResponseDto createPaymentUrl(VnPayRequestDto requestDto) {
         try {
             PaymentMethod method = paymentMethodRepository.findById(1)
                     .orElseGet(() -> {
@@ -82,7 +82,7 @@ public class VnPayService {
             System.out.println("[VNPay] Payment URL created for orderId=" + requestDto.orderId());
 
 
-            return new VnpayResponseDto(
+            return new VnPayResponseDto(
                     paymentUrl,
                     PaymentStatus.PENDING,
                     "Payment request created successfully!",
@@ -91,7 +91,7 @@ public class VnPayService {
 
         } catch (Exception e) {
             System.err.println("[VNPay] Error creating payment: " + e.getMessage());
-            return new VnpayResponseDto(
+            return new VnPayResponseDto(
                     null,
                     PaymentStatus.FAILED,
                     "Error creating payment: " + e.getMessage(),

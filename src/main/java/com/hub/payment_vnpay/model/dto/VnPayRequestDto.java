@@ -2,7 +2,7 @@ package com.hub.payment_vnpay.model.dto;
 
 import java.math.BigDecimal;
 
-public record VnpayRequestDto(
+public record VnPayRequestDto(
         Long orderId,
         String userId,          // thêm userId
         BigDecimal amount,

@@ -4,34 +4,34 @@ import com.hub.payment_vnpay.kafka.event.OrderPlacedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentInitiatedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
-import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
+import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
 import com.hub.payment_vnpay.service.VnPayService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.util.function.Function;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class PaymentProducer {
 
     private final VnPayService vnpayService;
 
-    public PaymentProducer(VnPayService vnpayService) {
-        this.vnpayService = vnpayService;
-    }
-
     @Bean
     public Function<OrderPlacedEvent, Object> processOrder() {
         return order -> {
-            System.out.println("[Kafka] Get OrderPlacedEvent: " + order);
+            log.info("[Kafka] Get OrderPlacedEvent: " + order);
 
             BigDecimal amount = order.getTotalPrice();
             Long orderId = order.getOrderId();
             String studentId = order.getStudentId();
 
             try {
-                var request = new VnpayRequestDto(
+                var request = new VnPayRequestDto(
                         orderId,
                         studentId,
                         amount,
@@ -54,7 +54,7 @@ public class PaymentProducer {
                             paymentResponse.paymentUrl()
                     );
 
-                    System.out.println("[Kafka] Send PaymentInitiatedEvent: " + initiatedEvent);
+                    log.info("[Kafka] Send PaymentInitiatedEvent: " + initiatedEvent);
                     return initiatedEvent;
 
                 } else {
@@ -67,7 +67,7 @@ public class PaymentProducer {
                             "N/A",
                             "Unable to create VNPay payment link"
                     );
-                    System.out.println("[Kafka] Send PaymentFailedEvent: " + failedEvent);
+                    log.info("[Kafka] Send PaymentFailedEvent: " + failedEvent);
                     return failedEvent;
                 }
 
@@ -81,7 +81,7 @@ public class PaymentProducer {
                         "N/A",
                         "Error creating payment: " + e.getMessage()
                 );
-                System.err.println("[Kafka] Send PaymentFailedEvent (Exception): " + failedEvent);
+                log.error("[Kafka] Send PaymentFailedEvent (Exception): " + failedEvent);
                 return failedEvent;
             }
         };
