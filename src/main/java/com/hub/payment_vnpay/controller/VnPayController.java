@@ -31,8 +31,8 @@ public class VnPayController {
 //    }
 
     /**
-     * IPN Server
-     *
+     * IPN Server (Success/Failed) -> to save db
+     * Return the current page
      * @param params
      */
     @PostMapping("/ipn")

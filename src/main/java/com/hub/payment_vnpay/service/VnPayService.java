@@ -31,6 +31,12 @@ public class VnPayService {
     private final PaymentMethodRepository paymentMethodRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    /*
+        Supplier
+        Function
+        Consumer
+     */
+
     @Transactional
     public VnPayResponseDto createPaymentUrl(VnPayRequestDto requestDto) {
         try {
