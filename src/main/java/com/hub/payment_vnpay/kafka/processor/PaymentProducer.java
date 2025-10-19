@@ -4,14 +4,9 @@ import com.hub.payment_vnpay.kafka.event.OrderPlacedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentInitiatedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
-<<<<<<< HEAD
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
 import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
 import com.hub.payment_vnpay.service.VnpayService;
-=======
-import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
-import com.hub.payment_vnpay.service.VnPayService;
->>>>>>> 5eeb53c5b4de2acb6b387e704a8d79b64b8e3928
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +16,9 @@ import java.util.function.Function;
 @Component
 public class PaymentProducer {
 
-    private final VnPayService vnpayService;
+    private final VnpayService vnpayService;
 
-    public PaymentProducer(VnPayService vnpayService) {
+    public PaymentProducer(VnpayService vnpayService) {
         this.vnpayService = vnpayService;
     }
 
@@ -37,12 +32,7 @@ public class PaymentProducer {
             String studentId = order.getStudentId();
 
             try {
-<<<<<<< HEAD
                 var request = new VnpayRequestDto(
-=======
-
-                var request = new VnPayRequestDto(
->>>>>>> 5eeb53c5b4de2acb6b387e704a8d79b64b8e3928
                         orderId,
                         studentId,
                         amount,

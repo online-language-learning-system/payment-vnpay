@@ -1,10 +1,12 @@
 package com.hub.payment_vnpay.config;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-public class VnPayConfig {
+public class VnpayConfig {
 
     @Value("${vnp.tmnCode}") private String tmnCode;
     @Value("${vnp.hashSecret}") private String hashSecret;

@@ -1,38 +1,24 @@
 package com.hub.payment_vnpay.controller;
 
-import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
-import com.hub.payment_vnpay.model.dto.VnPayResponseDto;
-import com.hub.payment_vnpay.service.VnPayService;
+import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
+import com.hub.payment_vnpay.model.dto.VnpayResponseDto;
+import com.hub.payment_vnpay.service.VnpayService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
-@RequestMapping()
+@RequestMapping("/vnpay")
 @RequiredArgsConstructor
-public class VnPayController {
+public class VnpayController {
 
-    private final VnPayService vnpayService;
+    private final VnpayService vnpayService;
 
-    @GetMapping("payment-url")
-    public ResponseEntity<String> callbackPaymentUrl(
-            @RequestParam(name = "orderId") Long orderId
-    ) {
-        String paymentUrl = vnpayService.callbackPaymentUrlByOrderId(orderId);
-        if (paymentUrl != null) {
-            return ResponseEntity.ok(paymentUrl);
-        } else {
-            return ResponseEntity.badRequest().body("Lỗi thanh toán");
-        }
+    @PostMapping("/create-payment")
+    public VnpayResponseDto createPayment(@RequestBody VnpayRequestDto requestDto) {
+        return vnpayService.createPaymentUrl(requestDto);
     }
-
-//    @PostMapping("/create-payment")
-//    public VnPayResponseDto createPayment(@RequestBody VnPayRequestDto requestDto) {
-//        return vnpayService.createPaymentUrl(requestDto);
-//    }
 
     // Callback client
     @GetMapping("/callback")

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(classes = {}) // Không load bất kỳ bean nào
-class PaymentVnPayApplicationTests {
+class PaymentVnpayApplicationTests {
 
     @Test
     void contextLoads() {

@@ -11,9 +11,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan("com.hub.payment_vnpay.model")
 @EnableJpaAuditing
 @SpringBootApplication
-public class PaymentVnPayApplication {
+public class PaymentVnpayApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(PaymentVnPayApplication.class, args);
+        SpringApplication.run(PaymentVnpayApplication.class, args);
     }
 }
