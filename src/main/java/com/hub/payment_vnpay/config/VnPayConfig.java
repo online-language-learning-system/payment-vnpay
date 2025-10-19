@@ -1,12 +1,12 @@
 package com.hub.payment_vnpay.config;
 
 import lombok.Getter;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
+@Getter
 @Configuration
-public class VnpayConfig {
+public class VnPayConfig {
 
     @Value("${vnp.tmnCode}") private String tmnCode;
     @Value("${vnp.hashSecret}") private String hashSecret;
@@ -19,15 +19,5 @@ public class VnpayConfig {
     @Value("${vnp.currency}") private String currency;
     @Value("${vnp.bankCode}") private String bankCode;
 
-    public String getTmnCode() { return tmnCode; }
-    public String getHashSecret() { return hashSecret; }
-    public String getApiUrl() { return apiUrl; }
-    public String getReturnUrl() { return returnUrl; }
-    public String getIpnUrl() { return ipnUrl; }
-    public String getVersion() { return version; }
-    public String getCommand() { return command; }
-    public String getLocale() { return locale; }
-    public String getCurrency() { return currency; }
-    public String getBankCode() { return bankCode; }
 }
 

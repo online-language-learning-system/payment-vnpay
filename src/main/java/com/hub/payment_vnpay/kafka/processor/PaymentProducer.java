@@ -2,11 +2,10 @@ package com.hub.payment_vnpay.kafka.processor;
 
 import com.hub.payment_vnpay.kafka.event.OrderPlacedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentInitiatedEvent;
-import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
 import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
-import com.hub.payment_vnpay.service.VnpayService;
+import com.hub.payment_vnpay.service.VnPayService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
@@ -16,9 +15,9 @@ import java.util.function.Function;
 @Component
 public class PaymentProducer {
 
-    private final VnpayService vnpayService;
+    private final VnPayService vnpayService;
 
-    public PaymentProducer(VnpayService vnpayService) {
+    public PaymentProducer(VnPayService vnpayService) {
         this.vnpayService = vnpayService;
     }
 

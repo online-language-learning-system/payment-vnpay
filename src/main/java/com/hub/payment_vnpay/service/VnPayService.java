@@ -1,6 +1,6 @@
 package com.hub.payment_vnpay.service;
 
-import com.hub.payment_vnpay.config.VnpayConfig;
+import com.hub.payment_vnpay.config.VnPayConfig;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.model.Payment;
@@ -24,9 +24,9 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class VnpayService {
+public class VnPayService {
 
-    private final VnpayConfig config;
+    private final VnPayConfig config;
     private final PaymentRepository paymentRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;

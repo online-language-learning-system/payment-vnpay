@@ -2,7 +2,7 @@ package com.hub.payment_vnpay.controller;
 
 import com.hub.payment_vnpay.model.dto.VnpayRequestDto;
 import com.hub.payment_vnpay.model.dto.VnpayResponseDto;
-import com.hub.payment_vnpay.service.VnpayService;
+import com.hub.payment_vnpay.service.VnPayService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,9 +11,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/vnpay")
 @RequiredArgsConstructor
-public class VnpayController {
+public class VnPayController {
 
-    private final VnpayService vnpayService;
+    private final VnPayService vnpayService;
 
     @PostMapping("/create-payment")
     public VnpayResponseDto createPayment(@RequestBody VnpayRequestDto requestDto) {
