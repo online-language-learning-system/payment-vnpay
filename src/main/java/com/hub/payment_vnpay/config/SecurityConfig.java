@@ -26,7 +26,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(author -> author
                         .requestMatchers("/swagger-ui", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/payment-vnpay/ipn", "/payment-vnpay/callback").permitAll()
-                        .requestMatchers("/payment-vnpay/create-payment").authenticated()
+                        .requestMatchers("/payment-vnpay/create-payment","/payment-vnpay/vnpay/create-payment").permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

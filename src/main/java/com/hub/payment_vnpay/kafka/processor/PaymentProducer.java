@@ -1,89 +1,52 @@
-package com.hub.payment_vnpay.kafka.processor;
+package com.hub.payment_vnpay.stream;
 
 import com.hub.payment_vnpay.kafka.event.OrderPlacedEvent;
-import com.hub.payment_vnpay.kafka.event.PaymentInitiatedEvent;
+import com.hub.payment_vnpay.kafka.event.PaymentSucceededEvent;
 import com.hub.payment_vnpay.kafka.event.PaymentFailedEvent;
 import com.hub.payment_vnpay.model.enumeration.PaymentStatus;
-import com.hub.payment_vnpay.model.dto.VnPayRequestDto;
 import com.hub.payment_vnpay.service.VnPayService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Flux;
 
-import java.math.BigDecimal;
 import java.util.function.Function;
 
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class PaymentProducer {
 
-    private final VnPayService vnpayService;
+    private final VnPayService vnPayService;
 
     @Bean
-    public Function<OrderPlacedEvent, Object> processOrder() {
-        return order -> {
-            log.info("[Kafka] Get OrderPlacedEvent: " + order);
-
-            BigDecimal amount = order.getTotalPrice();
-            Long orderId = order.getOrderId();
-            String studentId = order.getStudentId();
-
-            try {
-                var request = new VnPayRequestDto(
-                        orderId,
-                        studentId,
-                        amount,
-                        "Thanh toán đơn hàng của " + studentId + " - Order #" + orderId,
-                        "https://return-url.com",
-                        1
-                );
-
-                var paymentResponse = vnpayService.createPaymentUrl(request);
-
-                if (paymentResponse != null && paymentResponse.paymentUrl() != null) {
-
-                    var initiatedEvent = new PaymentInitiatedEvent(
-                            orderId,
-                            amount,
-                            order.getPaymentMethod(),
-                            PaymentStatus.PENDING,
-                            paymentResponse.transactionId(),
-                            studentId,
-                            paymentResponse.paymentUrl()
-                    );
-
-                    log.info("[Kafka] Send PaymentInitiatedEvent: " + initiatedEvent);
-                    return initiatedEvent;
-
-                } else {
-                    var failedEvent = new PaymentFailedEvent(
-                            orderId,
-                            studentId,
-                            amount,
-                            PaymentStatus.FAILED,
-                            order.getPaymentMethod(),
-                            "N/A",
-                            "Unable to create VNPay payment link"
-                    );
-                    log.info("[Kafka] Send PaymentFailedEvent: " + failedEvent);
-                    return failedEvent;
-                }
-
-            } catch (Exception e) {
-                var failedEvent = new PaymentFailedEvent(
-                        orderId,
-                        studentId,
-                        amount,
-                        PaymentStatus.FAILED,
-                        order.getPaymentMethod(),
-                        "N/A",
-                        "Error creating payment: " + e.getMessage()
-                );
-                log.error("[Kafka] Send PaymentFailedEvent (Exception): " + failedEvent);
-                return failedEvent;
-            }
-        };
+    public Function<Flux<OrderPlacedEvent>, Flux<Object>> processOrder() {
+        return orderFlux -> orderFlux.flatMap(order ->
+                vnPayService.createPaymentRequest(order)
+                        .flatMapMany(paymentResp ->
+                                vnPayService.waitForPaymentResult(order.getOrderId())
+                                        .map(status -> {
+                                            if (status.equals(PaymentStatus.SUCCESS)) {
+                                                return new PaymentSucceededEvent(
+                                                        order.getOrderId(),
+                                                        order.getTotalPrice(),
+                                                        "VNPay",
+                                                        PaymentStatus.SUCCESS,
+                                                        order.getOrderId().toString(),
+                                                        order.getStudentId()
+                                                );
+                                            } else {
+                                                return new PaymentFailedEvent(
+                                                        order.getOrderId(),
+                                                        order.getStudentId(),
+                                                        order.getTotalPrice(),
+                                                        PaymentStatus.FAILED,
+                                                        "VNPay",
+                                                        order.getOrderId().toString(),
+                                                        "Payment failed or cancelled by user"
+                                                );
+                                            }
+                                        })
+                        )
+        );
     }
 }

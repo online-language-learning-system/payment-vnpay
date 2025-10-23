@@ -45,16 +45,4 @@ public class Payment extends AbstractAuditEntity {
 
     @Column(name = "transaction_code", length = 100)
     private String transactionCode;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "last_modified_on")
-    private OffsetDateTime lastModifiedOn;
-
-    @Column(name = "last_modified_by", length = 100)
-    private String lastModifiedBy;
 }

@@ -1,9 +1,11 @@
 package com.hub.payment_vnpay.controller;
 
+import com.hub.payment_vnpay.kafka.event.OrderPlacedEvent;
+import com.hub.payment_vnpay.model.dto.VnPayResponseDto;
 import com.hub.payment_vnpay.service.VnPayService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.Map;
 
@@ -12,31 +14,18 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class VnPayController {
 
-    private final VnPayService vnpayService;
-
-    @GetMapping("/get-payment-url")
-    public ResponseEntity<String> getPaymentUrl() {
-        return ResponseEntity.ok("");
+    private final VnPayService vnPayService;
+    @PostMapping("/create-payment")
+    public Mono<VnPayResponseDto> createPayment(@RequestBody OrderPlacedEvent orderPlacedEvent) {
+        return vnPayService.createPaymentRequest(orderPlacedEvent);
     }
-
-//    @PostMapping("/create-payment")
-//    public VnPayResponseDto createPayment(@RequestBody VnPayRequestDto requestDto) {
-//        return vnpayService.createPaymentUrl(requestDto);
+//    @PostMapping("/ipn")
+//    public Mono<String> handleIpn(@RequestParam Map<String, String> params) {
+//        return vnPayService.handlePaymentCallback(params);
 //    }
-
-//    Callback client
-//    @GetMapping("/callback")
-//    public void callback(@RequestParam Map<String, String> params) {
-//         vnpayService.handlePayment(params);
-//    }
-
-    /**
-     * IPN Server (Success/Failed) -> to save db
-     * Return the current page
-     * @param params
-     */
-    @PostMapping("/ipn")
-    public void ipn(@RequestParam Map<String, String> params) {
-         vnpayService.handlePayment(params);
+    @GetMapping("/callback")
+    public Mono<String> handleCallback(@RequestParam Map<String, String> params) {
+        return vnPayService.handlePaymentCallback(params);
     }
 }
+
